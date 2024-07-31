@@ -1,1 +1,68 @@
-This project uses Python to analyze a database containing information on the red, green, and blue pixel percentages of blood samples from patients with anemia. We employ Shapiro-Wilk to ensure normality and perform hypothesis testing.
+The project "Anemia Stats" uses Python to analyze a database containing information on the red, green, and blue pixel percentages of blood samples from patients with anemia. We employ Shapiro-Wilk to ensure normality and perform hypothesis testing.
+
+The PBI project "Marathon Data" utilized the following SQL code to clean data and import views into BI to make visuals:
+
+
+--Subquery finds duplicate values
+WITH Athletes2 AS 
+(SELECT bib
+FROM Athletes
+GROUP BY bib
+HAVING COUNT(*) > 1)
+SELECT * FROM Athletes2
+
+--Retrieve duplicate rows
+SELECT a.*
+FROM Athletes AS a 
+JOIN Athletes2 AS d 
+ON a.bib = d.bib
+ORDER BY a.bib
+
+--CTE using ROW_NUMBER since there is no id row
+WITH CTE AS (
+    SELECT 
+        bib, 
+        ROW_NUMBER() OVER (PARTITION BY bib ORDER BY (SELECT NULL)) AS rn
+    FROM 
+        Athletes
+)
+
+--Delete duplicate rows
+DELETE FROM Athletes
+WHERE bib IN (
+    SELECT bib
+    FROM CTE
+    WHERE rn > 1
+);
+
+--Now Bib can act as a proper primary key
+ALTER TABLE Athletes
+ADD PRIMARY KEY (Bib);
+
+
+CREATE VIEW age_data AS
+WITH AvgFirstHalf AS (SELECT AVG(First_Half) AS avg_first_half FROM Athletes
+)
+SELECT 
+SUM(CASE WHEN Age > 30 AND First_Half < avg_first_half THEN 1 ELSE 0 END) AS upper_half_older,
+SUM(CASE WHEN Age < 30 AND First_Half < avg_first_half THEN 1 ELSE 0 END) AS upper_half_younger
+FROM Athletes, AvgFirstHalf;
+
+CREATE VIEW gender_data AS
+WITH AvgStandard AS (SELECT AVG(Finish) AS avg_finish FROM Athletes)
+SELECT 
+SUM(CASE WHEN Gender = 'M' AND Finish < avg_finish THEN 1 ELSE 0 END) AS above_avg_m,
+SUM(CASE WHEN Gender = 'F' AND Finish < avg_finish THEN 1 ELSE 0 END) AS above_avg_f
+FROM Athletes, AvgStandard;
+
+
+CREATE VIEW temper_data AS
+SELECT TOP 100 A.Bib, AVG(W.Max_Temp) AS Avg_Max_Temp, A.Finish
+FROM Athletes AS A
+JOIN Weather AS W ON A.Zip = W.Zip 
+GROUP BY A.Bib, A.Finish
+ORDER BY Avg_Max_Temp DESC;
+
+CREATE VIEW splitage AS
+SELECT TOP 50 Bib, Positive_Split, Age FROM Athletes
+ORDER BY Positive_Split
