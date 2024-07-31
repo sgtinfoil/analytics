@@ -1,1 +1,1 @@
-# analytics
+This project uses Python to analyze a database containing information on the red, green, and blue pixel percentages of blood samples from patients with anemia. We employ Shapiro-Wilk to ensure normality and perform hypothesis testing.
