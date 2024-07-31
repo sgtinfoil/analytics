@@ -4,19 +4,32 @@ The PBI project "Marathon Data" utilized the following SQL code to clean data an
 
 
 --Subquery finds duplicate values
+
 WITH Athletes2 AS 
+
 (SELECT bib
+
 FROM Athletes
+
 GROUP BY bib
+
 HAVING COUNT(*) > 1)
+
 SELECT * FROM Athletes2
 
+
 --Retrieve duplicate rows
+
 SELECT a.*
+
 FROM Athletes AS a 
+
 JOIN Athletes2 AS d 
+
 ON a.bib = d.bib
+
 ORDER BY a.bib
+
 
 --CTE using ROW_NUMBER since there is no id row
 WITH CTE AS (
